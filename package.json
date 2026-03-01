@@ -1,0 +1,44 @@
+{
+  "name": "multipub",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "copy": "rm -rf src/.next && cp -r public/out ./",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test",
+    "test:watch": "npm run test -- --watch"
+  },
+  "dependencies": {
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/theme-one-dark": "^6.1.1",
+    "@uiw/react-codemirror": "^4.23.0",
+    "codemirror": "^6.0.1",
+    "highlight.js": "^11.11.0",
+    "marked": "^15.0.11",
+    "front-matter": "^4.0.2",
+    "reading-time": "^1.5.0",
+    "uuid": "^11.0.3",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^3.0.2",
+    "lucide-react": "^0.479.0",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.7.3",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "^15.2.4",
+    "@tailwindcss/postcss": "^4.0.2",
+    "tailwindcss": "^4.0.2"
+  }
+}
