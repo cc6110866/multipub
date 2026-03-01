@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useCallback, RefObject } from 'react'
+import { useMemo, useCallback } from 'react'
 import { renderMarkdown } from '@/lib/markdown/renderer'
 import type { ThemeStyles } from '@/lib/markdown/renderer'
 import { getPlatformConfig } from '@/lib/platforms'
@@ -8,7 +8,7 @@ import { getPlatformConfig } from '@/lib/platforms'
 interface PreviewProps {
   markdown: string
   theme: ThemeStyles
-  previewRef?: RefObject<HTMLDivElement | null>
+  previewRef?: React.RefObject<HTMLDivElement>
   platform?: string // 平台 ID
   onCopySuccess?: (message: string) => void
 }
