@@ -5,9 +5,6 @@ import { renderMarkdown } from '@/lib/markdown/renderer'
 import type { ThemeStyles } from '@/lib/markdown/renderer'
 import { getPlatformConfig } from '@/lib/platforms'
 
-// Chrome 扩展 ID（需要替换为实际安装后的 ID）
-const EXTENSION_ID = process.env.NEXT_PUBLIC_EXTENSION_ID || ''
-
 interface PreviewProps {
   markdown: string
   theme: ThemeStyles
@@ -89,7 +86,7 @@ export default function Preview({ markdown, theme, themeId = 'default', previewR
     ? '📋 复制到公众号' 
     : `📋 复制到${platformConfig.name}`
 
-  // 发送内容到 Chrome 扩展
+// 发送内容到 Chrome 扩展
   const handleSendToExtension = useCallback(async () => {
     if (!previewRef?.current) return
     
@@ -103,53 +100,33 @@ export default function Preview({ markdown, theme, themeId = 'default', previewR
         theme: themeId
       }
       
-      // 检查是否有扩展 ID
-      if (!EXTENSION_ID) {
-        // 尝试使用 chrome.runtime（如果扩展已安装且配置了 externally_connectable）
-        if (typeof chrome !== 'undefined' && chrome.runtime) {
-          // 发送到任意扩展（需要 externally_connectable 配置）
-          chrome.runtime.sendMessage(content, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('[MultiPub] Extension error:', chrome.runtime.lastError)
-              setExtensionStatus('error')
-              onCopySuccess?.('❌ 扩展未安装或未正确配置')
-              return
-            }
-            
-            if (response?.success) {
-              setExtensionStatus('success')
-              onCopySuccess?.('✅ 已发送到扩展，请打开公众号编辑器')
-              setTimeout(() => setExtensionStatus('idle'), 3000)
-            } else {
-              setExtensionStatus('error')
-              onCopySuccess?.('❌ 发送失败: ' + (response?.message || '未知错误'))
-            }
-          })
-        } else {
+      // 检查是否在 Chrome 环境且扩展可用
+      if (typeof window === 'undefined' || !window.chrome?.runtime) {
+        setExtensionStatus('error')
+        onCopySuccess?.('❌ 请在 Chrome 浏览器中使用')
+        return
+      }
+
+      // 直接发送消息（通过 externally_connectable 匹配）
+      window.chrome.runtime.sendMessage(content, (response) => {
+        const error = window.chrome.runtime.lastError
+        
+        if (error) {
+          console.error('[MultiPub] Extension error:', error)
           setExtensionStatus('error')
-          onCopySuccess?.('❌ Chrome 扩展未安装')
+          onCopySuccess?.('❌ 扩展未安装，请先安装 MultiPub 扩展')
           return
         }
-      } else {
-        // 使用指定的扩展 ID 发送消息
-        chrome.runtime.sendMessage(EXTENSION_ID, content, (response) => {
-          if (chrome.runtime.lastError) {
-            console.error('[MultiPub] Extension error:', chrome.runtime.lastError)
-            setExtensionStatus('error')
-            onCopySuccess?.('❌ 扩展未安装或未正确配置')
-            return
-          }
-          
-          if (response?.success) {
-            setExtensionStatus('success')
-            onCopySuccess?.('✅ 已发送到扩展，请打开公众号编辑器')
-            setTimeout(() => setExtensionStatus('idle'), 3000)
-          } else {
-            setExtensionStatus('error')
-            onCopySuccess?.('❌ 发送失败: ' + (response?.message || '未知错误'))
-          }
-        })
-      }
+        
+        if (response?.success) {
+          setExtensionStatus('success')
+          onCopySuccess?.('✅ 已发送，请打开公众号编辑器点击注入')
+          setTimeout(() => setExtensionStatus('idle'), 3000)
+        } else {
+          setExtensionStatus('error')
+          onCopySuccess?.('❌ 发送失败: ' + (response?.message || '未知错误'))
+        }
+      })
     } catch (error) {
       console.error('[MultiPub] Send to extension error:', error)
       setExtensionStatus('error')
