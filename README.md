@@ -88,10 +88,11 @@ multipub/
 - [x] 5 套主题样式
 - [x] 一键复制功能
 
-### Phase 2: Chrome 扩展 🔄 进行中
-- [ ] Chrome 扩展开发
-- [ ] 自动注入公众号编辑器
-- [ ] 图片上传处理
+### Phase 2: Chrome 扩展 ✅ 已完成
+- [x] Chrome 扩展开发
+- [x] 自动注入公众号编辑器
+- [x] Web 端集成"发送到扩展"功能
+- [ ] 图片上传处理（待优化）
 
 ### Phase 3: 多平台扩展 📋 计划中
 - [ ] 知乎专栏支持
@@ -111,4 +112,17 @@ MIT
 ---
 
 **开发团队**: 归零工作室
-**当前版本**: v0.1.0 (Phase 1)
+**当前版本**: v0.2.0 (Phase 2)
+
+## 🔌 Chrome 扩展安装
+
+详见 [extension/README.md](./extension/README.md)
+
+1. 在 Chrome 中打开 `chrome://extensions/`
+2. 开启「开发者模式」
+3. 点击「加载已解压的扩展程序」
+4. 选择 `extension` 目录
+5. 复制扩展 ID，配置到 `.env.local`:
+   ```
+   NEXT_PUBLIC_EXTENSION_ID=你的扩展ID
+   ```

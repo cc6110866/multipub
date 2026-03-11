@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MultiPub</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">📝 MultiPub</div>
+      <div class="version">v1.0.0</div>
+    </header>
+
+    <main class="main">
+      <!-- 状态显示 -->
+      <div id="status-section" class="section">
+        <div class="status-label">当前状态</div>
+        <div id="status-text" class="status-text">检查中...</div>
+      </div>
+
+      <!-- 内容预览 -->
+      <div id="content-section" class="section" style="display: none;">
+        <div class="section-title">待注入内容</div>
+        <div id="content-preview" class="content-preview"></div>
+        <div class="content-meta">
+          <span id="content-theme"></span>
+          <span id="content-time"></span>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="actions">
+        <button id="btn-clear" class="btn btn-secondary" style="display: none;">
+          清除内容
+        </button>
+        <button id="btn-open-editor" class="btn btn-primary">
+          打开 MultiPub
+        </button>
+      </div>
+
+      <!-- 使用说明 -->
+      <div class="help">
+        <div class="help-title">使用方法</div>
+        <ol class="help-steps">
+          <li>在 MultiPub 编辑器中编写内容</li>
+          <li>点击「发送到扩展」按钮</li>
+          <li>打开公众号编辑器页面</li>
+          <li>点击右下角 📝 按钮注入</li>
+        </ol>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span>归零工作室</span>
+      <a href="https://github.com/cc6110866/multipub" target="_blank">GitHub</a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
