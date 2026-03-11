@@ -19,13 +19,15 @@ declare global {
 
   namespace chrome {
     namespace runtime {
+      // 发送消息到扩展（带扩展 ID）
       function sendMessage(
+        extensionId: string,
         message: ChromeRuntimeMessageOptions,
         callback?: (response: ChromeRuntimeMessageResponse) => void
       ): void
 
+      // 发送消息（无扩展 ID）
       function sendMessage(
-        extensionId: string,
         message: ChromeRuntimeMessageOptions,
         callback?: (response: ChromeRuntimeMessageResponse) => void
       ): void

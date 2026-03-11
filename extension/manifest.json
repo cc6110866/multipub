@@ -24,6 +24,14 @@
       "matches": ["https://mp.weixin.qq.com/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "https://multipub-five.vercel.app/*"
+      ],
+      "js": ["multipub-web.js"],
+      "run_at": "document_start"
     }
   ],
   "background": {

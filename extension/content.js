@@ -1,4 +1,4 @@
-// MultiPub Content Script
+// MultiPub Content Script for WeChat MP Editor
 // 注入到公众号编辑器页面，负责将内容插入到编辑器
 
 (function() {

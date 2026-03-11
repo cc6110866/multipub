@@ -86,13 +86,23 @@ export default function Preview({ markdown, theme, themeId = 'default', previewR
     ? '📋 复制到公众号' 
     : `📋 复制到${platformConfig.name}`
 
-// 发送内容到 Chrome 扩展
+  // 发送内容到 Chrome 扩展
   const handleSendToExtension = useCallback(async () => {
     if (!previewRef?.current) return
     
     setExtensionStatus('sending')
     
     try {
+      // 检测扩展是否安装（通过 meta 标签）
+      const extensionMeta = document.querySelector('meta[name="multipub-extension-id"]') as HTMLMetaElement | null
+      const extensionId = extensionMeta?.content
+      
+      if (!extensionId) {
+        setExtensionStatus('error')
+        onCopySuccess?.('❌ 扩展未安装，请先安装 MultiPub 扩展并刷新页面')
+        return
+      }
+
       // 准备要发送的内容
       const content = {
         type: 'MULTIPUB_CONTENT',
@@ -100,21 +110,14 @@ export default function Preview({ markdown, theme, themeId = 'default', previewR
         theme: themeId
       }
       
-      // 检查是否在 Chrome 环境且扩展可用
-      if (typeof window === 'undefined' || !window.chrome?.runtime) {
-        setExtensionStatus('error')
-        onCopySuccess?.('❌ 请在 Chrome 浏览器中使用')
-        return
-      }
-
-      // 直接发送消息（通过 externally_connectable 匹配）
-      window.chrome.runtime.sendMessage(content, (response) => {
-        const error = window.chrome.runtime.lastError
+      // 发送消息到扩展
+      chrome.runtime.sendMessage(extensionId, content, (response) => {
+        const error = chrome.runtime.lastError
         
         if (error) {
           console.error('[MultiPub] Extension error:', error)
           setExtensionStatus('error')
-          onCopySuccess?.('❌ 扩展未安装，请先安装 MultiPub 扩展')
+          onCopySuccess?.('❌ 发送失败，请重试')
           return
         }
         
