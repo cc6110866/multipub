@@ -11,12 +11,13 @@ const EXTENSION_ID = process.env.NEXT_PUBLIC_EXTENSION_ID || ''
 interface PreviewProps {
   markdown: string
   theme: ThemeStyles
+  themeId?: string // 主题 ID
   previewRef?: React.RefObject<HTMLDivElement>
   platform?: string // 平台 ID
   onCopySuccess?: (message: string) => void
 }
 
-export default function Preview({ markdown, theme, previewRef, platform = 'wechat', onCopySuccess }: PreviewProps) {
+export default function Preview({ markdown, theme, themeId = 'default', previewRef, platform = 'wechat', onCopySuccess }: PreviewProps) {
   const [extensionStatus, setExtensionStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const platformConfig = getPlatformConfig(platform)
   
@@ -95,14 +96,11 @@ export default function Preview({ markdown, theme, previewRef, platform = 'wecha
     setExtensionStatus('sending')
     
     try {
-      // 获取主题名称（从 theme 对象推断）
-      const themeName = theme.name || 'default'
-      
       // 准备要发送的内容
       const content = {
         type: 'MULTIPUB_CONTENT',
         html: previewRef.current.innerHTML,
-        theme: themeName
+        theme: themeId
       }
       
       // 检查是否有扩展 ID
@@ -157,7 +155,7 @@ export default function Preview({ markdown, theme, previewRef, platform = 'wecha
       setExtensionStatus('error')
       onCopySuccess?.('❌ 发送失败')
     }
-  }, [previewRef, theme, onCopySuccess])
+  }, [previewRef, themeId, onCopySuccess])
 
   return (
     <div className="h-full flex flex-col">

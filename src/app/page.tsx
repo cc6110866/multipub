@@ -299,6 +299,7 @@ export default function Home() {
           <Preview 
             markdown={markdown} 
             theme={currentTheme}
+            themeId={currentThemeId}
             previewRef={previewRef}
             platform={currentPlatform}
             onCopySuccess={handleCopySuccess}
