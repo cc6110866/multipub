@@ -78,187 +78,60 @@
     }
   }
 
-  // 在页面上下文中执行脚本（突破 content script 隔离）
-  function executeInPage(fn) {
-    const script = document.createElement('script');
-    script.textContent = `(${fn.toString()})();`;
-    document.documentElement.appendChild(script);
-    script.remove();
+  // 获取编辑器 iframe
+  function getEditorIframe() {
+    // 尝试多种方式获取编辑器
+    const selectors = [
+      '#edui1_iframeholder iframe',
+      '#edui1_iframe',
+      '.edui-editor-iframeholder iframe',
+      'iframe[name^="ueditor"]'
+    ];
+
+    for (const selector of selectors) {
+      const iframe = document.querySelector(selector);
+      if (iframe) {
+        console.log('[MultiPub] Found editor iframe:', selector);
+        return iframe;
+      }
+    }
+
+    console.warn('[MultiPub] Editor iframe not found');
+    return null;
   }
 
-  // 在页面上下文中注入内容
-  function injectInPageContext(html) {
-    const script = document.createElement('script');
-    script.textContent = `
-(function() {
-  try {
-    console.log('[MultiPub-Page] Starting injection...');
+  // 注入内容到编辑器
+  function injectContentToEditor(html) {
+    const iframe = getEditorIframe();
 
-    // 方案 1：查找 UEditor 实例
-    function findUEditor() {
-      // 检查 window.UE
-      if (window.UE && window.UE.getEditor) {
-        // 尝试获取默认编辑器
-        const editorIds = ['editor', 'ueditor', 'myEditor', 'content_editor'];
-        for (const id of editorIds) {
-          try {
-            const editor = window.UE.getEditor(id);
-            if (editor) {
-              console.log('[MultiPub-Page] Found UEditor:', id);
-              return editor;
-            }
-          } catch(e) {}
-        }
-
-        // 遍历所有编辑器实例
-        if (window.UE.instants) {
-          for (const key in window.UE.instants) {
-            const editor = window.UE.instants[key];
-            if (editor && editor.setContent) {
-              console.log('[MultiPub-Page] Found UEditor instance:', key);
-              return editor;
-            }
-          }
-        }
-      }
-      return null;
-    }
-
-    // 方案 2：查找 contenteditable 元素
-    function findContentEditable() {
-      const selectors = [
-        '#js_content',
-        '.rich_media_content',
-        '#edui1_iframeholder iframe',
-        '[contenteditable="true"]'
-      ];
-
-      for (const sel of selectors) {
-        const el = document.querySelector(sel);
-        if (el) {
-          console.log('[MultiPub-Page] Found editable element:', sel);
-          return el;
-        }
-      }
-      return null;
-    }
-
-    // 方案 3：操作 iframe
-    function injectToIframe(iframe, html) {
+    if (iframe) {
       try {
-        const doc = iframe.contentDocument || iframe.contentWindow.document;
-        const body = doc.body;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const body = iframeDoc.body;
 
-        // 先聚焦
-        body.focus();
-
-        // 选中全部内容
-        const sel = doc.getSelection();
-        const range = doc.createRange();
-        range.selectNodeContents(body);
-        sel.removeAllRanges();
-        sel.addRange(range);
-
-        // 使用 execCommand 插入
-        const success = doc.execCommand('insertHTML', false, html);
-        if (success) {
-          console.log('[MultiPub-Page] Injected via execCommand in iframe');
+        if (body) {
+          // 清空现有内容或追加
+          body.innerHTML = html;
+          console.log('[MultiPub] Content injected to iframe');
           return true;
         }
-
-        // 降级到 innerHTML
-        body.innerHTML = html;
-
-        // 触发事件
-        body.dispatchEvent(new Event('input', { bubbles: true }));
-        body.dispatchEvent(new Event('change', { bubbles: true }));
-
-        console.log('[MultiPub-Page] Injected via innerHTML in iframe');
-        return true;
-      } catch(e) {
-        console.error('[MultiPub-Page] Iframe injection failed:', e);
-        return false;
+      } catch (error) {
+        console.error('[MultiPub] Iframe injection failed:', error);
       }
     }
 
-    // 主注入逻辑
-    const html = ${JSON.stringify(html)};
+    // 备用方案：尝试直接操作页面元素
+    const editorArea = document.querySelector('.rich_media_content') ||
+                       document.querySelector('[contenteditable="true"]');
 
-    // 尝试 UEditor
-    const ue = findUEditor();
-    if (ue) {
-      ue.ready(function() {
-        ue.setContent(html, false);
-        ue.fireEvent('contentChange');
-        console.log('[MultiPub-Page] Content set via UEditor API');
-        window.postMessage({ type: 'MULTIPUB_RESULT', success: true, method: 'UEditor' }, '*');
-      });
-      return;
+    if (editorArea) {
+      editorArea.innerHTML = html;
+      console.log('[MultiPub] Content injected to editor area');
+      return true;
     }
 
-    // 尝试 iframe
-    const iframe = document.querySelector('#edui1_iframeholder iframe, .edui-editor-iframeholder iframe, iframe[name^="ueditor"]');
-    if (iframe) {
-      const success = injectToIframe(iframe, html);
-      if (success) {
-        window.postMessage({ type: 'MULTIPUB_RESULT', success: true, method: 'iframe' }, '*');
-        return;
-      }
-    }
-
-    // 尝试 contenteditable
-    const editable = findContentEditable();
-    if (editable && editable.tagName !== 'IFRAME') {
-      editable.focus();
-
-      // 选中全部
-      const sel = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(editable);
-      sel.removeAllRanges();
-      sel.addRange(range);
-
-      // 插入
-      const success = document.execCommand('insertHTML', false, html);
-      if (success) {
-        console.log('[MultiPub-Page] Injected via execCommand');
-        window.postMessage({ type: 'MULTIPUB_RESULT', success: true, method: 'execCommand' }, '*');
-        return;
-      }
-
-      // 降级
-      editable.innerHTML = html;
-      editable.dispatchEvent(new Event('input', { bubbles: true }));
-      console.log('[MultiPub-Page] Injected via innerHTML');
-      window.postMessage({ type: 'MULTIPUB_RESULT', success: true, method: 'innerHTML' }, '*');
-      return;
-    }
-
-    // 全部失败
-    window.postMessage({ type: 'MULTIPUB_RESULT', success: false, message: 'No editable element found' }, '*');
-
-  } catch(e) {
-    console.error('[MultiPub-Page] Injection error:', e);
-    window.postMessage({ type: 'MULTIPUB_RESULT', success: false, message: e.message }, '*');
+    return false;
   }
-})();
-    `;
-
-    document.documentElement.appendChild(script);
-    script.remove();
-  }
-
-  // 监听页面返回的结果
-  window.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'MULTIPUB_RESULT') {
-      console.log('[MultiPub] Received result:', event.data);
-      if (event.data.success) {
-        showTooltip('✅ 内容注入成功！方法: ' + event.data.method);
-      } else {
-        showTooltip('❌ 注入失败: ' + (event.data.message || '未知错误'));
-      }
-    }
-  });
 
   // 处理注入点击
   function handleInject() {
@@ -282,11 +155,18 @@
         return;
       }
 
-      showTooltip('⏳ 正在注入...', 5000);
+      // 注入内容
+      const success = injectContentToEditor(content.html);
 
-      // 在页面上下文中执行注入
-      injectInPageContext(content.html);
-      lastContent = content;
+      if (success) {
+        showTooltip('✅ 内容注入成功！');
+        lastContent = content;
+
+        // 可选：注入后清除存储
+        // chrome.runtime.sendMessage({ type: 'CLEAR_CONTENT' });
+      } else {
+        showTooltip('❌ 注入失败，请确保已打开编辑器');
+      }
     });
   }
 
