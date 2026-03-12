@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import Link from 'next/link'
 import Editor from '@/components/Editor'
 import Preview from '@/components/Preview'
 import ThemeSelector from '@/components/ThemeSelector'
 import PlatformSelector from '@/components/PlatformSelector'
+import ImageUploader from '@/components/ImageUploader'
 import { themes } from '@/lib/themes'
 import { getDefaultPlatform } from '@/lib/platforms'
 
@@ -202,6 +204,20 @@ export default function Home() {
     setTimeout(() => setSaveStatus(''), 2000)
   }, [markdown])
 
+  // 图片上传成功
+  const handleImageUploadSuccess = useCallback((url: string, markdownImage: string) => {
+    // 在光标位置插入图片 Markdown
+    setMarkdown(prev => prev + '\n\n' + markdownImage)
+    setSaveStatus('📷 图片已上传')
+    setTimeout(() => setSaveStatus(''), 2000)
+  }, [])
+
+  // 图片上传失败
+  const handleImageUploadError = useCallback((error: string) => {
+    setSaveStatus(`❌ 上传失败: ${error}`)
+    setTimeout(() => setSaveStatus(''), 3000)
+  }, [])
+
   // 全局快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -273,6 +289,14 @@ export default function Home() {
             currentTheme={currentThemeId}
             onThemeChange={setCurrentThemeId}
           />
+          {/* 设置按钮 */}
+          <Link
+            href="/settings"
+            className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1"
+            title="设置"
+          >
+            ⚙️ 设置
+          </Link>
           {saveStatus && (
             <span className="text-sm text-green-600 animate-pulse">
               {saveStatus}
@@ -285,13 +309,18 @@ export default function Home() {
       <main className="flex-1 flex overflow-hidden">
         {/* 左侧编辑器 */}
         <div className="w-1/2 border-r border-gray-200">
-          <Editor 
-            value={markdown} 
-            onChange={setMarkdown}
-            onSave={handleSave}
-            onCopy={handleCopy}
-            onOpen={handleOpen}
-          />
+          <ImageUploader 
+            onUploadSuccess={handleImageUploadSuccess}
+            onUploadError={handleImageUploadError}
+          >
+            <Editor 
+              value={markdown} 
+              onChange={setMarkdown}
+              onSave={handleSave}
+              onCopy={handleCopy}
+              onOpen={handleOpen}
+            />
+          </ImageUploader>
         </div>
 
         {/* 右侧预览 */}
